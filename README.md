@@ -1,31 +1,30 @@
 # RATlab NOR
 
-Batch-scores novel object recognition (NOR) videos using your trained SLEAP
-model: confirm each video's "novel" and "original" object positions (fast,
-since they carry over between videos), then let the app run unattended
-over a whole folder and produce an Excel workbook with exploration bouts
-per rat.
-
-Run this on the machine where SLEAP is already installed (the one you
-trained the model on) — the app calls SLEAP's tracking CLI for inference
-and only adds a few lightweight Python packages on top.
+RATlab NOR is a tool designed to speed up your data analysis workflow and improve
+accuracy. It uses deep learning models to convert novel object recognition task
+videos into usable numerical data autonomously, freeing up your time to actually
+do research. Just install SLEAP, train a model on your setup, load your videos
+into the app, and you're good to go.
 
 ## Installation
 
 **Option 1 — download the app.** Grab the prebuilt `RATlab NOR` app for
 your OS (`.app` for macOS, `.exe` for Windows, `AppImage` for Linux) from
-this repo's [Releases](../../releases) page, and unzip/extract it into
-your RATlab folder, next to `models/` — the app auto-detects `models/`
-from its own location that way, so there's no setup prompt. If it's ever
-moved somewhere else, it'll ask once where your RATlab folder is and
-remember your answer. On macOS the first launch needs a right-click ->
-Open (not a double-click) to get past Gatekeeper, since the app isn't
+this repo's [Releases](../../releases) page, and unzip/extract it.
+Make sure to keep the contents of the folder together, as the app
+needs to be able to reference its `models` directory in order to run
+inference. On macOS the first launch needs a right-click -> Open
+(not a double-click) to get past Gatekeeper, since the app isn't
 code-signed; after that, double-clicking works normally.
 
 SLEAP itself (`sleap-nn`/`sleap`) still needs to be installed and on
-`PATH` on whatever machine runs the app — packaging bundles the GUI and
-its own pipeline code, not SLEAP. Verify your setup with `sleap-nn track
---help`.
+`PATH` on whatever machine runs the app. To install it, follow the 
+instructions at <https://docs.sleap.ai/latest/installation/> to install
+the SLEAP GUI for model training, then run 
+
+```uv tool install sleap-nn --torch-backend auto```
+
+to install the neural network backend used by RATlab NOR.
 
 **Option 2 — build it yourself.** If there's no prebuilt release for your
 OS yet, or you've changed the source and want a fresh build, see

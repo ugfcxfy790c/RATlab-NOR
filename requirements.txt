@@ -1,0 +1,6 @@
+sleap-io
+opencv-python
+openpyxl
+numpy
+imageio-ffmpeg
+PySide6

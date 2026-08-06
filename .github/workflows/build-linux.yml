@@ -1,0 +1,67 @@
+name: Build Linux AppImage
+
+# Builds a real x86_64 AppImage on a GitHub-hosted Ubuntu runner, since
+# PyInstaller can't cross-compile -- an AppImage built anywhere else (a
+# local sandbox, an ARM Mac, etc.) only runs on that same CPU
+# architecture. This exists specifically for a maintainer without
+# access to x86_64 Linux hardware: push/tag here, download the result
+# from the Actions run instead of building locally.
+#
+# Trigger it either by pushing a tag like "v1.2.3" (also uploads the
+# AppImage as a release asset, if a GitHub Release for that tag exists)
+# or manually from the Actions tab ("Run workflow").
+#
+# Does NOT bundle model weights (nor_classifier/../models/) -- those
+# aren't expected to be committed to the repo (see build_linux.sh's own
+# comments on GitHub's 100MB file cap). This workflow only produces the
+# app-only AppImage; if you want the combined "AppImage + models"
+# release tarball build_linux.sh can also build, run that step locally
+# against this workflow's AppImage plus your own models/ folder.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: nor_classifier/packaging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      # GitHub's ubuntu-22.04+ runner images dropped libfuse2, which
+      # appimagetool (itself an AppImage) needs to run directly -- without
+      # this, build_linux.sh's appimagetool invocation fails with a
+      # confusing "dlopen(): error loading libfuse.so.2" rather than
+      # anything that looks like a missing-dependency message.
+      - name: Install libfuse2 (required to run appimagetool)
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
+
+      - name: Build the AppImage
+        run: |
+          chmod +x build_linux.sh
+          ./build_linux.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NOR_Classifier-x86_64.AppImage
+          path: nor_classifier/packaging/dist/NOR_Classifier-x86_64.AppImage
+          if-no-files-found: error
+
+      # Only runs on a tag push (not workflow_dispatch), and only if a
+      # GitHub Release for that tag already exists -- create the release
+      # first (draft is fine), then push the tag, to get the AppImage
+      # attached automatically.
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: nor_classifier/packaging/dist/NOR_Classifier-x86_64.AppImage

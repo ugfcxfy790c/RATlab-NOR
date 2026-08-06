@@ -1,0 +1,33 @@
+# Training config for the single-instance rat pose model.
+#
+# Run split first (from the RATlab folder, where your labels .slp lives):
+#   sleap split "RATlab_NOR_290x290_red_v0.2.2.slp" -o splits/ --val 0.1
+#
+# Then train (from the nor_classifier folder, so relative paths below match):
+#   sleap-nn train --config train_config.yaml
+#
+# This saves the checkpoint to models/single_instance/, which is exactly
+# what config.py's MODEL_PATHS already points at -- no further edits
+# needed once this finishes.
+
+data_config:
+  train_labels_path:
+    - ../splits/train.slp
+  val_labels_path:
+    - ../splits/val.slp
+
+model_config:
+  backbone_config:
+    unet:
+      filters: 32
+      max_stride: 16
+  head_configs:
+    single_instance:
+      confmaps:
+        sigma: 5.0
+
+trainer_config:
+  max_epochs: 200
+  save_ckpt: true
+  ckpt_dir: models
+  run_name: single_instance

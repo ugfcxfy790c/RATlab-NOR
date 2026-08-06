@@ -7,23 +7,47 @@ over a whole folder and produce an Excel workbook with exploration bouts
 per rat.
 
 Run this on the machine where SLEAP is already installed (the one you
-trained the model on) — this app calls SLEAP's tracking CLI for inference
+trained the model on) — the app calls SLEAP's tracking CLI for inference
 and only adds a few lightweight Python packages on top.
 
-## GUI (recommended)
+## Installation
+
+**Option 1 — download the app.** Grab the prebuilt `RATlab NOR` app for
+your OS (`.app` for macOS, `.exe` for Windows, `AppImage` for Linux) from
+this repo's [Releases](../../releases) page, and unzip/extract it into
+your RATlab folder, next to `models/` — the app auto-detects `models/`
+from its own location that way, so there's no setup prompt. If it's ever
+moved somewhere else, it'll ask once where your RATlab folder is and
+remember your answer. On macOS the first launch needs a right-click ->
+Open (not a double-click) to get past Gatekeeper, since the app isn't
+code-signed; after that, double-clicking works normally.
+
+SLEAP itself (`sleap-nn`/`sleap`) still needs to be installed and on
+`PATH` on whatever machine runs the app — packaging bundles the GUI and
+its own pipeline code, not SLEAP. Verify your setup with `sleap-nn track
+--help`.
+
+**Option 2 — build it yourself.** If there's no prebuilt release for your
+OS yet, or you've changed the source and want a fresh build, see
+`packaging/README.md`.
+
+**Option 3 — run from source (for development).**
 
 ```bash
+pip install -r requirements.txt
 python gui/app.py
 ```
 
-A PySide6 desktop app wrapping the same pipeline: queue up multiple
-video folders as separate jobs, confirm object positions per job, then
-run the whole queue unattended with live progress and a log — no
-terminal needed day to day. Each job gets its own output folder and
-object-coordinate/prediction cache, so unrelated video sets never
-collide. See `packaging/README.md` to build it into a double-clickable
-app (macOS `.app`, Windows `.exe`, Linux `AppImage`) for a machine
-without Python set up.
+The app calls `sleap-nn track` directly, falling back to `sleap track`
+then legacy `sleap-track` if `sleap-nn` isn't on PATH.
+
+## The app
+
+Queue up multiple video folders as separate jobs, confirm object
+positions per job, then run the whole queue unattended with live
+progress and a log — no terminal needed day to day. Each job gets its
+own output folder and object-coordinate/prediction cache, so unrelated
+video sets never collide.
 
 The command-line workflow below still works standalone and drives the
 same underlying modules — useful for scripting or a single one-off run.

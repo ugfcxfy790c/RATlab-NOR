@@ -11,12 +11,18 @@ name: Build Linux AppImage
 # AppImage as a release asset, if a GitHub Release for that tag exists)
 # or manually from the Actions tab ("Run workflow").
 #
-# Does NOT bundle model weights (nor_classifier/../models/) -- those
-# aren't expected to be committed to the repo (see build_linux.sh's own
-# comments on GitHub's 100MB file cap). This workflow only produces the
-# app-only AppImage; if you want the combined "AppImage + models"
-# release tarball build_linux.sh can also build, run that step locally
-# against this workflow's AppImage plus your own models/ folder.
+# Does NOT bundle model weights (../models/, a sibling of this repo's
+# root) -- those aren't expected to be committed to the repo (see
+# build_linux.sh's own comments on GitHub's 100MB file cap). This
+# workflow only produces the app-only AppImage; if you want the combined
+# "AppImage + models" release tarball build_linux.sh can also build, run
+# that step locally against this workflow's AppImage plus your own
+# models/ folder.
+#
+# Paths below are relative to this repo's own root (this repo *is* the
+# nor_classifier/ folder -- there's no extra nor_classifier/ path segment
+# to go through, unlike a local RATlab checkout where nor_classifier/ is
+# a subfolder of the wider RATlab lab folder).
 
 on:
   push:
@@ -29,7 +35,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: nor_classifier/packaging
+        working-directory: packaging
     steps:
       - uses: actions/checkout@v4
 
@@ -52,8 +58,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: NOR_Classifier-x86_64.AppImage
-          path: nor_classifier/packaging/dist/NOR_Classifier-x86_64.AppImage
+          name: RATlab_NOR-x86_64.AppImage
+          path: packaging/dist/RATlab_NOR-x86_64.AppImage
           if-no-files-found: error
 
       # Only runs on a tag push (not workflow_dispatch), and only if a
@@ -62,6 +68,6 @@ jobs:
       # attached automatically.
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: nor_classifier/packaging/dist/NOR_Classifier-x86_64.AppImage
+          files: packaging/dist/RATlab_NOR-x86_64.AppImage

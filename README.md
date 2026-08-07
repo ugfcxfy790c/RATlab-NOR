@@ -11,11 +11,13 @@ into the app, and you're good to go.
 **Option 1 — download the app.** Grab the prebuilt `RATlab NOR` app for
 your OS (`.app` for macOS, `.exe` for Windows, `AppImage` for Linux) from
 this repo's [Releases](../../releases) page, and unzip/extract it.
-Make sure to keep the contents of the folder together, as the app
+On macOS, you will need to click "Open Anyway" in Settings >
+Privacy & Security, as the app is not officially verified. On the first
+launch on all platforms, the app will ask you to point it to the folder
+where it is installed (which will be called RATlab). You can rename or move
+the folder, but make sure to keep its contents together, as the app
 needs to be able to reference its `models` directory in order to run
-inference. On macOS the first launch needs a right-click -> Open
-(not a double-click) to get past Gatekeeper, since the app isn't
-code-signed; after that, double-clicking works normally.
+inference.
 
 SLEAP itself (`sleap-nn`/`sleap`) still needs to be installed and on
 `PATH` on whatever machine runs the app. To install it, follow the 

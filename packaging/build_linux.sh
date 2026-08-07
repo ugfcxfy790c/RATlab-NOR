@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
-# Builds RATlab_NOR-x86_64.AppImage -- a single self-contained
+# Builds RATlab_NOR-<arch>.AppImage -- a single self-contained
 # executable file, the closest Linux equivalent to a portable .app/.exe
 # (double-click and run, no install step, no root needed).
+#
+# PyInstaller doesn't cross-compile, so this always builds for whatever
+# architecture it's actually run on (via `uname -m` below) -- x86_64 on
+# a normal Intel/AMD machine, aarch64 on an ARM one (a Raspberry Pi, an
+# Ampere/Graviton-style ARM server, an ARM dev laptop, GitHub's
+# ubuntu-24.04-arm hosted runner, etc.). Run this script on each
+# architecture you want a build for -- there's no single build that
+# covers both.
 #
 # Usage:
 #   cd nor_classifier/packaging
 #   ./build_linux.sh
 #
-# Output:
-#   dist/RATlab_NOR-x86_64.AppImage  -- the app by itself
-#   dist/RATlab-linux.tar.gz             -- app + models/, one download,
+# Output (using <arch> = whatever `uname -m` reports on this machine):
+#   dist/RATlab_NOR-<arch>.AppImage      -- the app by itself
+#   dist/RATlab-linux-<arch>.tar.gz      -- app + models/, one download,
 #                                            ready to extract and run
 #
 # If you just want the AppImage: move it into your RATlab folder, next
@@ -40,6 +48,13 @@
 
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# What PyInstaller actually bundles is determined by the machine running
+# it, not anything we choose here -- this just labels the output to
+# match so an aarch64 build and an x86_64 build built in the same dist/
+# (e.g. across two CI matrix jobs' artifacts) don't collide or get
+# mixed up.
+ARCH="$(uname -m)"
 
 APP_NAME="RATlab NOR"
 DIST_DIR="dist/$APP_NAME"
@@ -106,16 +121,20 @@ ln -sf "usr/bin/$APP_NAME" "$APPDIR/AppRun"
 if command -v appimagetool >/dev/null 2>&1; then
   APPIMAGETOOL=appimagetool
 else
-  echo "Downloading appimagetool (one-time)..."
-  curl -L -o /tmp/appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+  echo "Downloading appimagetool for $ARCH (one-time)..."
+  # AppImage/AppImageKit's own "continuous" release (the old download
+  # location) is now marked obsolete upstream in favor of this separate
+  # AppImage/appimagetool repo -- and critically, only this one publishes
+  # an aarch64 build (AppImageKit's continuous release was x86_64-only).
+  curl -L -o /tmp/appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage"
   chmod +x /tmp/appimagetool
   APPIMAGETOOL=/tmp/appimagetool
 fi
 
-"$APPIMAGETOOL" "$APPDIR" "dist/RATlab_NOR-x86_64.AppImage"
+"$APPIMAGETOOL" "$APPDIR" "dist/RATlab_NOR-$ARCH.AppImage"
 
 echo
-echo "Built: dist/RATlab_NOR-x86_64.AppImage"
+echo "Built: dist/RATlab_NOR-$ARCH.AppImage"
 echo "Move it into your RATlab folder (next to models/), mark it executable if needed (chmod +x), and double-click."
 
 # --- release bundle: AppImage + models/, one archive -----------------------
@@ -127,12 +146,12 @@ if [ -d "$RATLAB_DIR/models" ]; then
   rm -rf dist/release
   mkdir -p "$RELEASE_DIR"
   cp -r "$RATLAB_DIR/models" "$RELEASE_DIR/models"
-  cp "dist/RATlab_NOR-x86_64.AppImage" "$RELEASE_DIR/"
-  chmod +x "$RELEASE_DIR/RATlab_NOR-x86_64.AppImage"
+  cp "dist/RATlab_NOR-$ARCH.AppImage" "$RELEASE_DIR/"
+  chmod +x "$RELEASE_DIR/RATlab_NOR-$ARCH.AppImage"
 
-  rm -f dist/RATlab-linux.tar.gz
-  tar -C dist/release -czf dist/RATlab-linux.tar.gz RATlab
-  echo "Release bundle: dist/RATlab-linux.tar.gz -- upload this as a GitHub Release asset."
+  rm -f "dist/RATlab-linux-$ARCH.tar.gz"
+  tar -C dist/release -czf "dist/RATlab-linux-$ARCH.tar.gz" RATlab
+  echo "Release bundle: dist/RATlab-linux-$ARCH.tar.gz -- upload this as a GitHub Release asset."
 else
   echo
   echo "No models/ found at $RATLAB_DIR/models -- skipping the release bundle (app-only build above still works)."

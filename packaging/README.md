@@ -43,24 +43,30 @@ cd nor_classifier/packaging
 ./build_linux.sh
 ```
 
-Produces `dist/RATlab_NOR-x86_64.AppImage` (a single file, no install
-step) and `dist/RATlab-linux.tar.gz`.
+Produces `dist/RATlab_NOR-<arch>.AppImage` (a single file, no install
+step) and `dist/RATlab-linux-<arch>.tar.gz`, where `<arch>` is whatever
+`uname -m` reports on the machine you ran the script on (`x86_64` or
+`aarch64`) -- PyInstaller doesn't cross-compile, so it always builds for
+the architecture it's actually running on. Run the script again on the
+other architecture if you need both; there's no single build that
+covers them.
 
 This script downloads `appimagetool` automatically the first time if it's
 not already on your `PATH`. It also generates a placeholder icon if
 `packaging/icon.png` doesn't exist yet -- drop a real one there anytime
 and future builds will use it instead.
 
-**Don't have a Linux machine?** `.github/workflows/build-linux.yml` runs
-this same script on a real x86_64 GitHub Actions runner -- push a tag
-like `v1.2.3` (or trigger it manually from the Actions tab) and download
-the resulting `RATlab_NOR-x86_64.AppImage` from the run's artifacts,
-or have it attach automatically to a GitHub Release for that tag. This
-matters beyond convenience: PyInstaller bundles the actual CPU
-architecture it's run on, so an AppImage built on, say, an ARM machine
-(an Apple Silicon Mac's Linux VM, an ARM cloud sandbox, a Raspberry Pi)
-silently only runs on ARM Linux, not the x86_64 desktops most people
-actually have -- the CI runner sidesteps that entirely.
+**Don't have Linux hardware?** `.github/workflows/build-linux.yml` runs
+this same script on real GitHub Actions runners for both `x86_64` (most
+desktops/laptops) and `aarch64` (Raspberry Pi, Ampere/Graviton-style ARM
+cloud VMs, ARM dev laptops) -- push a tag like `v1.2.3` (or trigger it
+manually from the Actions tab) and download the resulting
+`RATlab_NOR-x86_64.AppImage` / `RATlab_NOR-aarch64.AppImage` from the
+run's artifacts, or have them attach automatically to a GitHub Release
+for that tag. Building both matters beyond convenience: unlike
+Windows-on-ARM (x64 emulation) or Apple Silicon (Rosetta), stock Linux
+ARM64 has no built-in x86_64 compatibility layer, so an x86_64-only
+AppImage simply won't run on an ARM Linux machine at all.
 
 ## Sharing a build (one download, no setup)
 

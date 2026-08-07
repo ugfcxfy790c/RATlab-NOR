@@ -1,0 +1,70 @@
+name: Build Windows
+
+# Builds RATlab NOR.exe on a GitHub-hosted Windows runner, since
+# PyInstaller can't cross-compile -- a .exe has to be built by running it
+# on an actual Windows machine. This exists so a maintainer without
+# access to a Windows PC can still get a Windows build: push/tag here,
+# download the result from the Actions run instead of building locally.
+#
+# Trigger it either by pushing a tag like "v1.2.3" (also uploads the zip
+# as a release asset, if a GitHub Release for that tag exists) or
+# manually from the Actions tab ("Run workflow").
+#
+# Does NOT bundle model weights (../models/, a sibling of this repo's
+# root) -- those aren't expected to be committed to the repo (see
+# build_windows.bat's own comments on GitHub's 100MB file cap). This
+# workflow only produces the app-only build; build_windows.bat's own
+# "release bundle" step (app + models/) only runs when it finds a
+# models/ folder next to the repo, which won't exist on a clean CI
+# checkout -- so build_windows.bat itself skips it here, and this
+# workflow zips up the plain app output instead (PyInstaller's onedir
+# mode produces a whole folder, not a single .exe, so it needs zipping
+# to become one downloadable file either way).
+#
+# SLEAP's own CLI (sleap-nn/sleap) is NOT needed to build the app -- it's
+# only shelled out to at runtime (see sleap_inference.py) -- so this
+# workflow doesn't install it. It IS needed on whatever machine actually
+# runs the built app.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: packaging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build the app
+        shell: cmd
+        run: build_windows.bat
+
+      - name: Zip the app-only build
+        shell: pwsh
+        run: Compress-Archive -Path "dist\RATlab NOR" -DestinationPath "dist\RATlab-NOR-windows.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RATlab-NOR-windows
+          path: packaging/dist/RATlab-NOR-windows.zip
+          if-no-files-found: error
+
+      # Only runs on a tag push (not workflow_dispatch), and only if a
+      # GitHub Release for that tag already exists -- create the release
+      # first (draft is fine), then push the tag, to get this attached
+      # automatically.
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: packaging/dist/RATlab-NOR-windows.zip

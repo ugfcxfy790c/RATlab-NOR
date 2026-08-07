@@ -83,7 +83,7 @@ REM --- release bundle: app + models\, one archive ---------------------------
 set "RATLAB_DIR=..\.."
 if exist "%RATLAB_DIR%\models" (
     echo.
-    echo Building release bundle (app + models\)...
+    echo Building release bundle ^(app + models\^)...
     set "RELEASE_DIR=dist\release\RATlab"
     if exist dist\release rmdir /s /q dist\release
     mkdir "%RELEASE_DIR%"
